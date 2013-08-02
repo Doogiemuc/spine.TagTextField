@@ -7,7 +7,7 @@ class NewTagInputCtrl extends Spine.Controller
 
     events:
       'keyup' : 'keyUp'  # cancelEdit on ESC. finishEdit on return
-      'blur'  : 'blur'   # or when user clicks outside the input elem
+      #'blur'  : 'blur'   # or when user clicks outside the input elem
 
     # create <input type="text" class="taginput" size=5 maxlength=100>
     constructor: ->

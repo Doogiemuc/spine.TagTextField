@@ -1,1 +1,83 @@
-(function(){if(!this.specs){var e={},t={},n=function(s,o){var u=r(o,s),a=r(u,"./index"),f,l;f=t[u]||t[a];if(f)return f.exports;if(!(l=e[u]||e[u=a]))throw"module '"+s+"' not found";f={id:u,exports:{}};try{return t[u]=f,l(f.exports,function(e){return n(e,i(u))},f),f.exports}catch(c){throw delete t[u],c}},r=function(e,t){var n=[],r,i;/^\.\.?(\/|$)/.test(t)?r=[e,t].join("/").split("/"):r=t.split("/");for(var s=0,o=r.length;s<o;s++)i=r[s],i==".."?n.pop():i!="."&&i!=""&&n.push(i);return n.join("/")},i=function(e){return e.split("/").slice(0,-1).join("/")};this.specs=function(e){return n(e,"")},this.specs.define=function(t){for(var n in t)e[n]=t[n]},this.specs.modules=e,this.specs.cache=t}return this.specs.define}).call(this)({"controllers/NewTagInput":function(e,t,n){(function(){var e;e=window.require,describe("The NewTagInput Controller",function(){var t;return t=e("controllers/newtaginput"),it("can noop",function(){})})}).call(this)},"controllers/TagController":function(e,t,n){(function(){var e;e=window.require,describe("The TagController Controller",function(){var t;return t=e("controllers/tagcontroller"),it("can noop",function(){})})}).call(this)},"controllers/TagCtrl":function(e,t,n){(function(){var e;e=window.require,describe("The TagCtrl Controller",function(){var t;return t=e("controllers/tagctrl"),it("can noop",function(){})})}).call(this)},"models/TagList":function(e,t,n){(function(){var e;e=window.require,describe("The TagList Model",function(){var t;return t=e("models/taglist"),it("can noop",function(){})})}).call(this)}}),require("lib/setup");for(var key in specs.modules)specs(key)
+
+
+(function(/*! Stitch !*/) {
+  if (!this.specs) {
+    var modules = {}, cache = {}, require = function(name, root) {
+      var path = expand(root, name), indexPath = expand(path, './index'), module, fn;
+      module   = cache[path] || cache[indexPath]
+      if (module) {
+        return module.exports;
+      } else if (fn = modules[path] || modules[path = indexPath]) {
+        module = {id: path, exports: {}};
+        try {
+          cache[path] = module;
+          fn(module.exports, function(name) {
+            return require(name, dirname(path));
+          }, module);
+          return module.exports;
+        } catch (err) {
+          delete cache[path];
+          throw err;
+        }
+      } else {
+        throw 'module \'' + name + '\' not found';
+      }
+    }, expand = function(root, name) {
+      var results = [], parts, part;
+      if (/^\.\.?(\/|$)/.test(name)) {
+        parts = [root, name].join('/').split('/');
+      } else {
+        parts = name.split('/');
+      }
+      for (var i = 0, length = parts.length; i < length; i++) {
+        part = parts[i];
+        if (part == '..') {
+          results.pop();
+        } else if (part != '.' && part != '') {
+          results.push(part);
+        }
+      }
+      return results.join('/');
+    }, dirname = function(path) {
+      return path.split('/').slice(0, -1).join('/');
+    };
+    this.specs = function(name) {
+      return require(name, '');
+    }
+    this.specs.define = function(bundle) {
+      for (var key in bundle)
+        modules[key] = bundle[key];
+    };
+    this.specs.modules = modules;
+    this.specs.cache   = cache;
+  }
+  return this.specs.define;
+}).call(this)({
+  "controllers/NewTagInput": function(exports, require, module) {(function() {
+  var require;
+
+  require = window.require;
+
+  describe('The NewTagInput Controller', function() {
+    var NewTagInput;
+    NewTagInput = require('controllers/newtaginput');
+    return it('can noop', function() {});
+  });
+
+}).call(this);
+}, "models/TagList": function(exports, require, module) {(function() {
+  var require;
+
+  require = window.require;
+
+  describe('The Tag Model', function() {
+    var TagList;
+    TagList = require('models/tagMdl');
+    return it('can noop', function() {});
+  });
+
+}).call(this);
+}
+});
+
+require('lib/setup'); for (var key in specs.modules) specs(key);

@@ -2,7 +2,7 @@ require('lib/setup')
 
 Spine            = require('spine')
 TagMdl           = require('models/TagMdl')
-TagTextFieldCtrl = require('controllers/TagTextFieldCtrl')
+TagTextFieldCtrl  = require('controllers/TagTextFieldCtrl')
 
 class App extends Spine.Controller
   constructor: ->
@@ -14,7 +14,7 @@ class App extends Spine.Controller
     tagTwo = new TagMdl(tagname: "TagTwo")
     tagTwo.save()
 
-    #TODO: create a view for a tagtextfield
+    # create a view for a tagtextfield
     @html require("views/storycard_demo")({dummyParam: '4711'})
 
     new TagTextFieldCtrl(el: $('#tagtextfield'), tagList: TagMdl.all() )

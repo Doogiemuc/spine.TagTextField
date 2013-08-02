@@ -2,44 +2,44 @@
 
 
 .tagtextfield
-    background-color: #F2F2F2
     font-size: 10pt
-    width: 50%
-    margin: 0 0 0 3px
 
 .tagtextfield_glow
     outline: none;
     border-color: #9ecaed;
     box-shadow: 0 0 10px #9ecaed;
 
-
 .tagtextfield .tag
-    border-radius: 5em
-    /*-moz-border-radius: 5em */
-    border: 1px solid #AAE
+    border-radius: 1em
+    border: none
     font-size: 10pt
     color: #FFF
     vbg-gradient(#CCF, #AAF)
-    padding: 0px 5px 0px 10px
-    margin: 0 3px 0 0
+    padding: 0 0 0 0.5em
+    margin: 0 0 0 3px
     cursor: default
 
-.tagtextfield .tag .tagDelete
+.tagtextfield i.icon-remove
+    color:#999
+    margin-right:3px
+    cursor: default
+    color: red
     visibility: hidden
-    color: #F00
-
+    
 .tagtextfield .taginput
-    border-radius: 5em
-    /*-moz-border-radius: 5em*/
-    border: none  //1px solid #AAE
+    border-radius: 1em
+    border: none
+    width: 50px
+    font-family: Verdana;
     font-size: 10pt
     color: #FFF
     background: #CCF
-    padding: 0 10px 0 10px
-    margin: 0
+    padding: 0 5px 0px 5px
+    margin: 0 0 0 3px
+    vertical-align: baseline
     &:focus
         outline-width: 0
 
 .mouseover
-    background: #AAC !important
+    background: #CCF !important
 

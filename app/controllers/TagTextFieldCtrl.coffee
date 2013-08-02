@@ -1,48 +1,44 @@
 Spine           = require('spine')
 TagMdl          = require('models/TagMdl')
-NewTagInputCtrl = require('controllers/NewTagInputCtrl')
-require('doogiesTools')
+TagCtrl         = require('controllers/TagCtrl')
+NewTagInputCtrl  = require('controllers/NewTagInputCtrl')
 
-#-- Controller for a TagTextField that contanis Tags
-class TagCtrl extends Spine.Controller
-  elements:         #child elements of id="tagtextfield"
-    '.tag' : 'tagElements'
-
+###
+  Controller for a TagTextField 
+  that contanis a list of [Tags|TagCtrl]
+  and may have an active [TagInput|TagInputCtrl]
+###
+class TagTextFieldCtrl extends Spine.Controller
   events:
-    'mouseenter .tag': 'toggleHighlight'
-    'mouseleave .tag': 'toggleHighlight'
+    # 'mouseenter .tag': 'toggleHighlight'
+    # 'mouseleave .tag': 'toggleHighlight'
     'dblclick'       : 'startEdit'
 
   editMode        = false
   newTagInputCtrl = null
   # @taglist         = []
 
-  # This constructor expects two parameteres:
+  # This constructor expects a two parameters
   # el:      the tagtextfield div
-  # taglist: a list of TagMdls (may be empty)
+  # tagList: a list of TagMdls (may be empty)
   constructor: ->
     super
+    @log "new TagTextFieldCtrl tagList=", @tagList
     TagMdl.bind("refresh change", @rerender)
     @rerender()
 
-  # add/remove highlight on mouseenter/mouseleave
-  toggleHighlight: (e) ->
-    $(e.currentTarget).toggleClass 'mouseover'
-
-    elem = $(e.currentTarget).children(".tagDelete")
-    # @log e.currentTarget, elem[0]
-    elem.toggleVisibility()
-
-
   # re-render all tags when model changes
   rerender: =>
+    @log "rerendering ", @tagList
     @el.empty()
-    #TODO: render only tags for this textfieldID
-    for tagMdl in @tagList
-      @append require("views/tag")({tagname: tagMdl.tagname})
+    # TODO: render only tags for this textfieldID
+    @append '<i class="icon-tags" style="color:#999"></i>MMM'
+    for aTagMdl in @tagList
+      @append new TagCtrl(tagMdl: aTagMdl)
+
 
   # append an input field after the last tag
-  startEdit: (e) ->
+  startEdit: (e) =>
     return if editMode           # do not create an input twice
     editMode = true
     @el.addClass("tagtextfield_glow")
@@ -59,7 +55,7 @@ class TagCtrl extends Spine.Controller
   finishEdit: (val) =>
     if val
       newTag = new TagMdl(tagname: val)
-      @tagList.push(newTag) #TODO: Rerender should know what to render
+      @tagList.push(newTag) # TODO: Rerender should know what to render
       newTag.save()
       @el.removeClass("tagtextfield_glow")
     else
@@ -73,7 +69,7 @@ class TagCtrl extends Spine.Controller
     editMode = false
 
 
-module.exports = TagCtrl
+module.exports = TagTextFieldCtrl
 
 
 
