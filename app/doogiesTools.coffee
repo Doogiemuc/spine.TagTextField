@@ -1,7 +1,19 @@
 
 
+
+
+# jQuery plugin to toggle visibility instead of css attribute "display" as the existing $.toggle() does.
+jQuery::toggleVisibility = ->
+  if this.css("visibility") == "hidden"
+    this.css("visibility", "visible")
+  else
+    this.css("visibility", "hidden")
+  this
+
+
+
 ###   in Javascript
-      found here
+      found here http://jsfiddle.net/nGhjQ/2/
 
 (function($) {
     $.fn.makeInvisible = function() {
@@ -13,15 +25,5 @@
 })(jQuery);
 
 ###
-
-
-# jQuery plugin to toggle visibility instead of css attribute "display" as the existing $.toggle() does.
-jQuery::toggleVisibility = ->
-  if this.css("visibility") == "hidden"
-    this.css("visibility", "visible")
-  else
-    this.css("visibility", "hidden")
-  this
-
 
 
