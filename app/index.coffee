@@ -3,10 +3,9 @@ require('lib/setup')
 Spine            = require('spine')
 TagInput         = require('controllers/TagInput')
 
-
 class App extends Spine.Controller
-  events:
-    'click #addOne': 'addDummyTagToModel'
+  #events:
+  #  'click #addOne': 'addDummyTagToModel'
 
   constructor: ->
     super
@@ -26,15 +25,5 @@ class App extends Spine.Controller
     $('#taginput').replaceWith(tagInput.el)
 
     @log 'initialized ' + new Date
-
-
-
-  tagnum = 0
-
-  addDummyTagToModel: =>
-    tagnum++
-    tag = new TagMdl(tagname: 'Tag'+tagnum, tagkey: 'tag'+tagnum, tagtextfield_ID: 'tagtextfield')
-    tag.save()
-
 
 module.exports = App

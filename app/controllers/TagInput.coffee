@@ -117,7 +117,7 @@ class TagCtrl extends Spine.Controller
     @trigger('deleteTag', @tagName)
     @release()
 
-
+#end of TagCtrl
 
 #----- Controller for the input field to add a new tag
 class NewTagInputCtrl extends Spine.Controller
@@ -143,15 +143,34 @@ class NewTagInputCtrl extends Spine.Controller
     keyUp: (e) =>
       @trigger('finishEdit', @el.val()) if e.which == RETURN_KEY
       @trigger('cancelEdit')            if e.which == ESCAPE_KEY
-      #if @el.val().length > 2
-      #  suggestions = TagMdl.getByPrefix(@el.val())
-      #  @el.append new TagSuggestBox(suggestions)
+      if @el.val().length > 2
+        @el.append new TagOracleCtrl(suggestions: ['suggest1', 'suggest2'])
 
     blur: ->
       @trigger('finishEdit', @el.val())
       #MAYBE:  make this configurable  and think about validation
 
     #TODO: auto completion from an "suggestionOracle" shown as dropdown
+
+#end of class NewTagInputCtrl
+
+#----- a popup that shows a list of autocompletion suggestions for the entered prefix string
+class TagOracleCtrl extends Spine.Controller
+    tag:       'ul'
+    className: 'tagoracle'
+
+    constructor: ->
+      super
+      @el.append('<li>Test</li>')
+      @el.append('<li>Test2</li>')
+
+      #@setSuggestions()
+
+    setSuggestions: ->
+      @el.append('<li class="tagOracleItem">'+suggestion+'</li>') for suggestion in @suggestions
+      true
+
+
 
 
 
