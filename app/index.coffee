@@ -10,6 +10,7 @@ class App extends Spine.Controller
   constructor: ->
     super
 
+
     # create a view for a tagtextfield
     @html require("views/storycard_demo")({dummyParam: '4711'})
 

@@ -55,7 +55,7 @@ class TagInput extends Spine.Controller
     @tags.remove(tagName)
 
   # append an input field after the last tag
-  startEdit: (e) =>
+  startEdit: () =>
     return if _editMode           # do not create an input twice
     _editMode = true
     @el.addClass("tagtextfield_glow")
@@ -112,6 +112,7 @@ class TagCtrl extends Spine.Controller
     @el.toggleClass 'mouseover'
     $(@el).children('#deleteTag').toggleVisibility()
 
+
   # called when user clicks the delete 'X'. Removes this tag completely.
   deleteTag: =>
     @trigger('deleteTag', @tagName)
@@ -150,7 +151,6 @@ class NewTagInputCtrl extends Spine.Controller
       @trigger('finishEdit', @el.val())
       #MAYBE:  make this configurable  and think about validation
 
-    #TODO: auto completion from an "suggestionOracle" shown as dropdown
 
 #end of class NewTagInputCtrl
 
@@ -159,18 +159,20 @@ class TagOracleCtrl extends Spine.Controller
     tag:       'ul'
     className: 'tagoracle'
 
+    _selected = 0    # selected list items
+
     constructor: ->
       super
+      if not @suggestions
+        @log "Must have suggestions in TagOracleCtrl"
       @el.append('<li>Test</li>')
       @el.append('<li>Test2</li>')
-
-      #@setSuggestions()
 
     setSuggestions: ->
       @el.append('<li class="tagOracleItem">'+suggestion+'</li>') for suggestion in @suggestions
       true
 
-
+#end of class TagOracleCtrl
 
 
 
