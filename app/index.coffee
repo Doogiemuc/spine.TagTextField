@@ -10,20 +10,23 @@ class App extends Spine.Controller
   constructor: ->
     super
 
-
     # create a view for a tagtextfield
     @html require("views/storycard_demo")({dummyParam: '4711'})
 
     # just a dummy list of tags
-    myTags = ["java", "javascript", "coffeescript", "javaset"]
+    myTags = ['java', 'javascript', 'javafoobar', 'coffeescript', 'abc']
 
     # an oracle that returns a list of tagnames that match a given prefix
-    # @parma prefix what the user alredy typed
-    #tagOracle: (prefix) ->
-    #  suggestedTag for suggestedTag in myTags when suggestedTag.indexOf(prefix) == 0
+    # @param prefix - what the user alredy typed
+    tagOracleFunc = (prefix) ->
+      suggestedTag for suggestedTag in myTags when suggestedTag.indexOf(prefix) == 0
 
-    tagInput = new TagInput(tags: myTags)
-    $('#taginput').replaceWith(tagInput.el)
+    # create an input field for tags. The existing #taginput will be replaced by the TagInput component.
+    tagInput = new TagInput({
+      el: $('#taginput'), 
+      tags: myTags, 
+      tagOracle: tagOracleFunc
+    })
 
     @log 'initialized ' + new Date
 

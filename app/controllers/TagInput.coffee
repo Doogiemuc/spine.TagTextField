@@ -1,7 +1,11 @@
 ###
-# A TagInput shows an editable list of tags. On double click a new input is shown
-# where a new tag can be entered. On mouseover a red cross is shown,
-# where this tag can be deleted.
+# A TagInput shows an editable list of tags. 
+#
+# By clicking the plus-sign, a new tag can be added.
+# Optionally now tags can be autocompleted from a given list of suggestions.
+# Matching suggestions are shown in a popup window below the new tag input.
+#
+#
 #
 # Usage:
 # <code>new TagInput(tags: ['optional', 'list', 'of', 'tags'])</code>
@@ -16,8 +20,14 @@ class TagInput extends Spine.Controller
   className: 'taginput'
 
   events:
-    'dblclick' : 'startEdit'     #cancelEdit and finishEdit are called from NewTagInputCtrl
+    'click #addtagcircle' : 'startEdit'     #cancelEdit and finishEdit are called from NewTagInputCtrl
+  
+  elements:
+    '#addtagcircle' : 'addtagcircle'
 
+  # instance fields
+  #tags = []   # list of tags
+  
   # private fields
   _editMode        = false
   _newTagInputCtrl = null
@@ -29,9 +39,13 @@ class TagInput extends Spine.Controller
   #  tagOrcale - a function that returns tag suggestions (list of strings), when passed a prefix (string)
   #  tags      - list of inital Tags
   # }
-  constructor: ->
+  constructor: (options)->
+    if options.el
+      newElem = $("<"+@tag+">")
+      options.el.replaceWith newElem
+      options.el = newElem
     super
-    @log "new TagInput("+@tags+")"
+    @log "new TagInput(@el="+@el.prop("tagName")+", tags=["+@tags+"])"
     @rerender()
 
   # update UI and re-render all tags
@@ -39,8 +53,11 @@ class TagInput extends Spine.Controller
     @log "rerendering"
     @el.empty()
     @append '<i class="icon-tags" style="color:#999"></i>'
-    @addOneTag tag for tag in @tags
-
+    tagsOrig = @tags
+    @tags = []    # need to empty tags array, cause addOneTag() will fill it again
+    @addOneTag tag for tag in tagsOrig
+    @append '<span class="addtagcircle" id="addtagcircle">+</span>'
+    
   # append another Tag to the list of tags of this TagInput
   addOneTag: (newTag) =>
     return unless newTag
@@ -50,7 +67,7 @@ class TagInput extends Spine.Controller
     @tags.push(newTag)
     @append tagCtrl
 
-  # called from TagCtrl, when user clicks on red X to delete a Tag
+  # callback from TagCtrl, when user clicks on red X to delete a Tag
   deleteTag: (tagName) =>
     @tags.remove(tagName)
 
@@ -58,34 +75,32 @@ class TagInput extends Spine.Controller
   startEdit: () =>
     return if _editMode           # do not create an input twice
     _editMode = true
-    @el.addClass("tagtextfield_glow")
-    _newTagInputCtrl = new NewTagInputCtrl()
+    @addtagcircle.remove()
+    _newTagInputCtrl = new NewTagInputCtrl(tagOracle: @tagOracle)
     _newTagInputCtrl.bind('finishEdit', @finishEdit)
     _newTagInputCtrl.bind('cancelEdit', @cancelEdit)
     @append(_newTagInputCtrl)
-    _newTagInputCtrl.el.focus()
+    _newTagInputCtrl.focus()
+    
 
   # callback from input field, when users presses return
   # we must use '=>' to find the correct 'this' context
   finishEdit: (val) =>
-    if val
-      @el.removeClass("tagtextfield_glow")
-      _newTagInputCtrl.release()
-      @addOneTag(val)
-    else
-      @cancelEdit()
+    _newTagInputCtrl.release()
+    @tags.push(val) if val    #TODO: When is a newly entered tag valid?
+    @rerender()     
     _editMode = false
 
   # callback from input field, when user presses escape
   cancelEdit: =>
     _newTagInputCtrl.release()
-    @el.removeClass("tagtextfield_glow")
+    @rerender()
     _editMode = false
 
 #end of TagInput controller.
 
 
-#----- Controller for a Tag. i.e. one span element inside a TagInput
+#----- Controller for a Tag. i.e. one span element inside a TagInput that handles deletion
 class TagCtrl extends Spine.Controller
 
   tag: 'span'          # type of HTML element that this controller controls
@@ -93,8 +108,8 @@ class TagCtrl extends Spine.Controller
   className: 'tag'     # CSS class to set on the span element
 
   events:
-    'mouseenter'       : 'toggleTagHighlight'
-    'mouseleave'       : 'toggleTagHighlight'
+    'mouseenter'       : 'toggleDeleteTag'
+    'mouseleave'       : 'toggleDeleteTag'
     'click #deleteTag' : 'deleteTag'
 
   # @param tagName: name of a tag as String
@@ -107,11 +122,9 @@ class TagCtrl extends Spine.Controller
   render: ->
     @html require("views/tag")({tagname: @tagName})
 
-  # add/remove highlight and show/hide delete 'X' on mouseenter/mouseleave
-  toggleTagHighlight: =>
-    @el.toggleClass 'mouseover'
+  # show/hide delete 'X' on mouseenter/mouseleave
+  toggleDeleteTag: =>
     $(@el).children('#deleteTag').toggleVisibility()
-
 
   # called when user clicks the delete 'X'. Removes this tag completely.
   deleteTag: =>
@@ -123,56 +136,93 @@ class TagCtrl extends Spine.Controller
 #----- Controller for the input field to add a new tag
 class NewTagInputCtrl extends Spine.Controller
 
-    # <input type="text" class="taginput" size=5 maxlength=100>
-    tag:
-      'input'            # create a new HTML text <input> element
+    tag:       'span'        # container for input field and suggestion popup
 
-    className:
-      'newtag'
+    className: 'newtaginput'
 
-    attributes:
-      'size'      : 5
-      'maxlength' : 100
+    elements: 'input': 'inputElem'
 
     events:
-      'keyup' : 'keyUp'  # cancelEdit on ESC. finishEdit on return
-      'blur'  : 'blur'   # or when user clicks outside the input elem
+      'keyup' : 'keyUp'      # cancelEdit on ESC. finishEdit on return
+      'blur'  : 'blur'       # or when user clicks outside the input elem
+      'input input' : 'inputValChanged' # listen to value changes in the <input> field via the modern 'input' event
 
-    RETURN_KEY = 13
-    ESCAPE_KEY = 27
+    # instance properties
+    tagOracleShown          : false  # if more than two letters are entered, show popup with possible autocompletions
+    selectedSuggestionIdx   : -1     # index of the currently selected suggestion (-1 = none selected)
+    
+    # Constants for key coces
+    RETURN_KEY    = 13
+    ESCAPE_KEY    = 27
+    KEY_UP        = 38
+    KEY_DOWN      = 40
 
-    keyUp: (e) =>
-      @trigger('finishEdit', @el.val()) if e.which == RETURN_KEY
-      @trigger('cancelEdit')            if e.which == ESCAPE_KEY
-      if @el.val().length > 2
-        @el.append new TagOracleCtrl(suggestions: ['suggest1', 'suggest2'])
-
-    blur: ->
-      @trigger('finishEdit', @el.val())
-      #MAYBE:  make this configurable  and think about validation
-
-
-#end of class NewTagInputCtrl
-
-#----- a popup that shows a list of autocompletion suggestions for the entered prefix string
-class TagOracleCtrl extends Spine.Controller
-    tag:       'ul'
-    className: 'tagoracle'
-
-    _selected = 0    # selected list items
-
+    # create an input field for the new tag (wraped in a span)
     constructor: ->
       super
-      if not @suggestions
-        @log "Must have suggestions in TagOracleCtrl"
-      @el.append('<li>Test</li>')
-      @el.append('<li>Test2</li>')
+      @append '<input type="text" size=5 maxlength=100>'
+      
+      @log "newTagInputCtrl"
+      
+    # set focus to the <input> elem
+    focus: ->
+      @inputElem.focus()
+    
+    # dispatch keypress and update suggestin popup
+    keyUp: (e) =>
+      switch e.which
+        when RETURN_KEY
+          @trigger('finishEdit', @inputElem.val())
+        when ESCAPE_KEY
+          @trigger('cancelEdit')
+        when KEY_UP
+          if @tagOracleShown and @selectedSuggestionIdx > 0 
+            @selectedSuggestionIdx--
+            @inputValChanged()
+        when KEY_DOWN
+          if @tagOracleShown and @selectedSuggestionIdx < @matchingSuggestions.length-1
+            @selectedSuggestionIdx++
+            @inputValChanged()
+            
+      @log "KEYUP: matchingSugs="+@matchingSuggestions+", selectedSuggestionIdx="+@selectedSuggestionIdx
+ 
 
-    setSuggestions: ->
-      @el.append('<li class="tagOracleItem">'+suggestion+'</li>') for suggestion in @suggestions
-      true
+    # when value of <input> field changes, then update the matching suggestions in the tagOracle
+    inputValChanged: =>
+      @log "inputValChanged to '" + @inputElem.val()+"'"
+      @matchingSuggestions = @tagOracle @inputElem.val()
+      if @inputElem.val().length > 2
+        if @tagOracleShown 
+          # update suggestions in already shown tagOracle
+          @log "updating oracle idx="+@selectedSuggestionIdx
+          $("#tagOracle").replaceWith @getOracleView()
+        else
+          # open tagOracle
+          @log "showing oracle with suggestions="+@matchingSuggestions
+          @append @getOracleView()
+          @tagOracleShown = true
+      else
+        if @tagOracleShown
+          # remove tagOracleView
+          $("#tagOracle").remove
+          @tagOracleShown = false   
+    
+    #TODO create a seperate render method for oracle view that just replaces a #tagOracle span thats always there
+    #     in inputValChanged  only show or hide this span
+        
+    # create a popup window showing the list of matching tags
+    getOracleView: ->
+      #TODO: show matching part in bold in suggestion texts  (regex? need to prevent escapeing in jade template then)
+      oracleView = require("views/tagOracle")({
+        suggestions:           @matchingSuggestions,     
+        selectedSuggestionIdx: @selectedSuggestionIdx
+      })
 
-#end of class TagOracleCtrl
+    blur: ->
+      #@trigger('finishEdit', @el.val())
+      #MAYBE:  make this configurable  and think about validation
+
+#end of class NewTagInputCtrl
 
 
 

@@ -1,0 +1,8 @@
+//- Jade template for the tag oracle that shows a list of suggestions
+span(class="tagOracle", id="tagOracle")
+  ul
+    each val, index in suggestions
+      if index == selectedSuggestionIdx
+        li(class='selectedSuggestion')= val
+      else
+        li= val
