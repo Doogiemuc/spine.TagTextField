@@ -112,7 +112,8 @@ class TagCtrl extends Spine.Controller
     'mouseleave'       : 'toggleDeleteTag'
     'click #deleteTag' : 'deleteTag'
 
-  # @param tagName: name of a tag as String
+  # Create a <span> that shows one tag with rounded borders (and a delete-x on hover)
+  # @param tagName - name of a tag as String
   constructor: ->
     super
     @throw "param 'tagName' required for TagCtrl constructor" unless @tagName
@@ -136,11 +137,13 @@ class TagCtrl extends Spine.Controller
 #----- Controller for the input field to add a new tag
 class NewTagInputCtrl extends Spine.Controller
 
-    tag:       'span'        # container for input field and suggestion popup
+    tag:       'span'        # wrapper for input field and tagOracle
 
     className: 'newtaginput'
 
-    elements: 'input': 'inputElem'
+    elements:  
+      'input'     : 'inputElem'
+      '#tagOracle' : 'tagOracleElem'  # the little popup below the input
 
     events:
       'keyup' : 'keyUp'      # cancelEdit on ESC. finishEdit on return
@@ -154,15 +157,16 @@ class NewTagInputCtrl extends Spine.Controller
     # Constants for key coces
     RETURN_KEY    = 13
     ESCAPE_KEY    = 27
-    KEY_UP        = 38
-    KEY_DOWN      = 40
+    MOVE_UP       = 38
+    MOVE_DOWN     = 40
 
-    # create an input field for the new tag (wraped in a span)
+    # create an <input> field for a new tag (will be wraped in a span)
+    #  @param tagOracle - a function that returns autocompletion suggestions when passed a prefix string
     constructor: ->
       super
       @append '<input type="text" size=5 maxlength=100>'
-      
-      @log "newTagInputCtrl"
+      @append '<span id="tagOracle">content</span>'
+      @log "NewTagInputCtrl appended"
       
     # set focus to the <input> elem
     focus: ->
@@ -172,25 +176,50 @@ class NewTagInputCtrl extends Spine.Controller
     keyUp: (e) =>
       switch e.which
         when RETURN_KEY
-          @trigger('finishEdit', @inputElem.val())
+          val = @selectedSuggestionIdx >= 0 ? @matchingSuggestions[@selectedSuggestionIdx] : @inputElem.val()
+          @trigger('finishEdit', val)
         when ESCAPE_KEY
           @trigger('cancelEdit')
-        when KEY_UP
-          if @tagOracleShown and @selectedSuggestionIdx > 0 
+        when MOVE_UP
+          if @tagOracleShown and @selectedSuggestionIdx > 0
             @selectedSuggestionIdx--
-            @inputValChanged()
-        when KEY_DOWN
+            @rerenderOracle()
+        when MOVE_DOWN
+          # TODO: only open tagOracleSpan if a tagOracle function was passed
           if @tagOracleShown and @selectedSuggestionIdx < @matchingSuggestions.length-1
             @selectedSuggestionIdx++
-            @inputValChanged()
+            @rerenderOracle()
             
-      @log "KEYUP: matchingSugs="+@matchingSuggestions+", selectedSuggestionIdx="+@selectedSuggestionIdx
+      @log "KEYUP: selectedSuggestionIdx="+@selectedSuggestionIdx
  
+    rerenderOracle: =>
+      @log "rerenderOracle(idx="+@selectedSuggestionIdx+")"
+      if @inputElem.val().length <= 2
+        @tagOracleElem.hide()
+        @tagOracleShown = false
+        @log "hiding oracle"
+        return
+      @matchingSuggestions = @tagOracle(@inputElem.val())
+      if @matchingSuggestions.length == 0
+        @tagOracleElem.hide()
+        return
+      @selectedSuggestionIdx = Math.min(@selectedSuggestionIdx, @matchingSuggestions.length-1)
+      
+      @tagOracleElem.replaceWith require("views/tagOracle")({
+        suggestions:          @matchingSuggestions, 
+        selectedSuggestionIdx: @selectedSuggestionIdx
+      })
+      @refreshElements()
+      @tagOracleElem.show
+      @tagOracleShown = true
+             
 
-    # when value of <input> field changes, then update the matching suggestions in the tagOracle
+    # when value of <input> field changes, then update the matching suggestions and rerender the oracle
     inputValChanged: =>
-      @log "inputValChanged to '" + @inputElem.val()+"'"
       @matchingSuggestions = @tagOracle @inputElem.val()
+      @log "inputValChanged to '" + @inputElem.val()+"', matchingSugs="+@matchingSuggestions
+      @rerenderOracle()
+      return
       if @inputElem.val().length > 2
         if @tagOracleShown 
           # update suggestions in already shown tagOracle
@@ -207,9 +236,6 @@ class NewTagInputCtrl extends Spine.Controller
           $("#tagOracle").remove
           @tagOracleShown = false   
     
-    #TODO create a seperate render method for oracle view that just replaces a #tagOracle span thats always there
-    #     in inputValChanged  only show or hide this span
-        
     # create a popup window showing the list of matching tags
     getOracleView: ->
       #TODO: show matching part in bold in suggestion texts  (regex? need to prevent escapeing in jade template then)

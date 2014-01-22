@@ -14,7 +14,7 @@ class App extends Spine.Controller
     @html require("views/storycard_demo")({dummyParam: '4711'})
 
     # just a dummy list of tags
-    myTags = ['java', 'javascript', 'javafoobar', 'coffeescript', 'abc']
+    myTags = ['java', 'javascript', 'javafoobar', 'javammama', 'abc']
 
     # an oracle that returns a list of tagnames that match a given prefix
     # @param prefix - what the user alredy typed
@@ -24,7 +24,7 @@ class App extends Spine.Controller
     # create an input field for tags. The existing #taginput will be replaced by the TagInput component.
     tagInput = new TagInput({
       el: $('#taginput'), 
-      tags: myTags, 
+      tags: ['abc', 'def'], 
       tagOracle: tagOracleFunc
     })
 
