@@ -154,8 +154,8 @@ class NewTagInputCtrl extends Spine.Controller
       '#tagOracle' : 'tagOracleElem'  # the little popup below the input
 
     events:
-      'keyup' : 'keyUp'      # cancelEdit on ESC. finishEdit on return
-      'blur'  : 'blur'       # or when user clicks outside the input elem
+      'keyup'      : 'keyUp'      # cancelEdit on ESC. finishEdit on return
+      'blur input'  : 'blur'       # or when user clicks outside the input elem
       'input input' : 'inputValChanged' # listen to value changes in the <input> field via the modern 'input' event
 
     # instance properties
@@ -195,37 +195,28 @@ class NewTagInputCtrl extends Spine.Controller
           @trigger('cancelEdit')
         when MOVE_UP
           break unless @tagOracleShown
-          if @selectedSuggestionIdx == 0
-            @inputElem.val(@oldValue)
-          if @selectedSuggestionIdx > 0
+          if @selectedSuggestionIdx >= 0
             @selectedSuggestionIdx--
-            @inputElem.val(@matchingSuggestions[@selectedSuggestionIdx])
             @rerenderOracle()
         when MOVE_DOWN
           break unless @tagOracleShown
-          if @selectedSuggestionIdx == -1
-            @oldValue = @getValue() # remember old value in case the user moves back to the input field without selecting anything frome the tagOracle
           if @selectedSuggestionIdx < @matchingSuggestions.length-1
             @selectedSuggestionIdx++
-            @inputElem.val(@matchingSuggestions[@selectedSuggestionIdx])
             @rerenderOracle()
-            
-      @log "KEYUP: selectedSuggestionIdx="+@selectedSuggestionIdx+" oldValue="+@oldValue
- 
+      # @log "KEYUP: selectedSuggestionIdx="+@selectedSuggestionIdx
+
+    # called when selection changes. (Does not update the matchingSuggestions!)      
     rerenderOracle: =>
       return unless @tagOracle?()   # only open tagOracleSpan if a tagOracle function was passed
-      @log "rerenderOracle(idx="+@selectedSuggestionIdx+")"
+      # @log "rerenderOracle(idx="+@selectedSuggestionIdx+")"
       if @inputElem.val().length <= 2
         @tagOracleElem.hide()
         @tagOracleShown = false
-        @log "hiding oracle"
         return
-      @matchingSuggestions = @tagOracle(@inputElem.val())
       if @matchingSuggestions.length == 0
         @tagOracleElem.hide()
         return
       @selectedSuggestionIdx = Math.min(@selectedSuggestionIdx, @matchingSuggestions.length-1)
-      
       @tagOracleElem.replaceWith require("views/tagOracle")({
         suggestions:          @matchingSuggestions, 
         selectedSuggestionIdx: @selectedSuggestionIdx
@@ -238,7 +229,7 @@ class NewTagInputCtrl extends Spine.Controller
     # when value of <input> field changes, then update the matching suggestions and rerender the oracle
     inputValChanged: =>
       @matchingSuggestions = @tagOracle @inputElem.val()
-      @log "inputValChanged to '" + @inputElem.val()+"', matchingSugs="+@matchingSuggestions
+      # @log "inputValChanged to '" + @inputElem.val()+"', matchingSugs="+@matchingSuggestions
       @rerenderOracle() 
     
     # create a popup window showing the list of matching tags
@@ -249,8 +240,8 @@ class NewTagInputCtrl extends Spine.Controller
         selectedSuggestionIdx: @selectedSuggestionIdx
       })
 
-    blur: ->
-      #@trigger('finishEdit', @el.val())
+    blur: =>
+      @trigger('finishEdit', @getValue())
       #MAYBE:  make this configurable  and think about validation
 
 #end of class NewTagInputCtrl

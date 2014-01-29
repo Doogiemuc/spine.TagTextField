@@ -14,7 +14,7 @@ class App extends Spine.Controller
     @html require("views/storycard_demo")({dummyParam: '4711'})
 
     # just a dummy list of tags
-    myTags = ['java', 'javascript', 'javafoobar', 'javammama', 'abc']
+    myTags = ['java', 'javascript', 'javafoobar', 'javafamous', 'javaflum', 'javammama', 'abc']
 
     # an oracle that returns a list of tagnames that match a given prefix
     # @param prefix - what the user alredy typed
